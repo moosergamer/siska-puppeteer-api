@@ -64,5 +64,9 @@ app.get('/api/videos', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server is running on http://localhost:${PORT}`);
+});
+
+process.on('unhandledRejection', err => {
+  console.error('🔥 Unhandled Rejection:', err);
 });
