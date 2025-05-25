@@ -25,7 +25,7 @@ app.get('/api/videos', async (req, res) => {
     });
 
     const page = await browser.newPage();
-    await page.goto('https://siska.video', { waitUntil: 'networkidle2' });
+    await page.goto('https://xtime.video', { waitUntil: 'networkidle2' });
 
     const allVideos = await page.evaluate(() => {
       const anchors = Array.from(document.querySelectorAll('a[href*="video.php?videoID="]'));
@@ -45,7 +45,7 @@ app.get('/api/videos', async (req, res) => {
 
     for (const video of paged) {
       const videoPage = await browser.newPage();
-      await videoPage.goto(`https://siska.video/video.php?videoID=${video.video_id}`, {
+      await videoPage.goto(`https://xtime.video/video.php?videoID=${video.video_id}`, {
         waitUntil: 'domcontentloaded'
       });
 
