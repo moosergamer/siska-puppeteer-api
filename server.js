@@ -4,20 +4,33 @@ const puppeteer = require('puppeteer-core');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Health check route
+app.get('/', (req, res) => {
+  res.send('✅ Server is up. Try /api/videos?page=1');
+});
+
+// Main video scraping API
 app.get('/api/videos', async (req, res) => {
+  console.log("🔍 /api/videos endpoint hit");
+
   const pageNum = parseInt(req.query.page || '1');
   const perPage = 10;
 
-  const browser = await puppeteer.launch({
-    executablePath: '/usr/bin/chromium-browser',
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
-
-  const page = await browser.newPage();
-
   try {
+    console.log("🚀 Launching Puppeteer...");
+
+    const browser = await puppeteer.launch({
+      executablePath: '/usr/bin/chromium-browser',
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
+    console.log("✅ Puppeteer launched");
+
+    const page = await browser.newPage();
+    console.log("🌍 Visiting siska.video...");
     await page.goto('https://siska.video', { waitUntil: 'networkidle2' });
+    console.log("✅ Homepage loaded");
 
     const allVideos = await page.evaluate(() => {
       const anchors = Array.from(document.querySelectorAll('a[href*="video.php?videoID="]'));
@@ -32,6 +45,8 @@ app.get('/api/videos', async (req, res) => {
         };
       }).filter(v => v.video_id);
     });
+
+    console.log(`🧠 Fetched ${allVideos.length} videos`);
 
     const paged = allVideos.slice((pageNum - 1) * perPage, pageNum * perPage);
 
@@ -49,6 +64,9 @@ app.get('/api/videos', async (req, res) => {
       await videoPage.close();
     }
 
+    await browser.close();
+
+    console.log(`✅ Sending ${paged.length} videos`);
     res.json({
       page: pageNum,
       per_page: perPage,
@@ -57,16 +75,16 @@ app.get('/api/videos', async (req, res) => {
     });
 
   } catch (err) {
+    console.error("🔥 Error in /api/videos:", err.message);
     res.status(500).json({ error: err.message });
-  } finally {
-    await browser.close();
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Server is running on http://localhost:${PORT}`);
-});
-
+// Global error catcher
 process.on('unhandledRejection', err => {
   console.error('🔥 Unhandled Rejection:', err);
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
 });
